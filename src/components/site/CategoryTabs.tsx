@@ -24,7 +24,6 @@ export function CategoryTabs({ categories }: { categories: Category[] }) {
           const slug = visible[0].target.id.replace(/^c-/, '')
           setActive(prev => {
             if (prev !== slug) {
-              // Auto-scroll the nav to center the active tab
               const pill = navRef.current?.querySelector<HTMLElement>(`[data-slug="${slug}"]`)
               if (pill && navRef.current) {
                 const navRect = navRef.current.getBoundingClientRect()
@@ -60,18 +59,16 @@ export function CategoryTabs({ categories }: { categories: Category[] }) {
 
   return (
     <div
-      className="bg-white border-b border-gray-100 w-full max-w-lg shadow-sm"
+      className="bg-white w-full"
       style={{
         position: 'sticky',
         top: '56px',
-        left: '50%',
-        transform: 'translateX(-50%)',
         zIndex: 20,
       }}
     >
       <div
         ref={navRef}
-        className="flex gap-2 overflow-x-auto no-scrollbar px-3 py-2"
+        className="flex gap-3 overflow-x-auto no-scrollbar px-4 py-2.5"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {categories.map(c => (
@@ -80,10 +77,10 @@ export function CategoryTabs({ categories }: { categories: Category[] }) {
             href={`#c-${c.slug}`}
             data-slug={c.slug}
             onClick={e => handleClick(c.slug, e)}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex-shrink-0 text-sm font-bold whitespace-nowrap transition-colors ${
               active === c.slug
-                ? 'bg-[#0A1628] text-white'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                ? 'text-[#0A1628] border-b-2 border-[#0A1628] pb-1'
+                : 'text-gray-400 hover:text-[#0A1628]'
             }`}
           >
             {c.name}
