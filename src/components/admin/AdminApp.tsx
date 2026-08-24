@@ -10,26 +10,21 @@ export default function AdminApp() {
   const [config, setConfig] = useState<SiteConfig | null>(null)
 
   useEffect(() => {
-    // Check auth on mount AND on every focus (when user returns to tab)
-    const checkAuth = () => {
+    // Small delay to ensure cookies are available after reload
+    const timer = setTimeout(() => {
       fetch('/api/auth/me')
-        .then((r) => r.json())
-        .then((d) => {
-          setAuthed(d.authenticated === true)
-        })
+        .then(r => r.json())
+        .then(d => setAuthed(d.authenticated === true))
         .catch(() => setAuthed(false))
-    }
-    checkAuth()
-    // Re-check when window regains focus (handles reload + tab switch)
-    window.addEventListener('focus', checkAuth)
-    return () => window.removeEventListener('focus', checkAuth)
+    }, 100)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
-    if (authed) {
+    if (authed === true) {
       fetch('/api/config')
-        .then((r) => r.json())
-        .then((d) => { if (d.config) setConfig(d.config) })
+        .then(r => r.json())
+        .then(d => { if (d.config) setConfig(d.config) })
         .catch(() => {})
     }
   }, [authed])
@@ -48,9 +43,6 @@ export default function AdminApp() {
     )
   }
 
-  if (!authed) {
-    return <AdminLogin onLoggedIn={() => setAuthed(true)} />
-  }
-
+  if (!authed) return <AdminLogin onLoggedIn={() => setAuthed(true)} />
   return <AdminShell config={config} onLogout={logout} />
 }
