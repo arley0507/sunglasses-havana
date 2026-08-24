@@ -16,3 +16,4 @@ upload/
 upload/
 .env*
 .env.vercel-prod
+.vercel

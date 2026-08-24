@@ -1,0 +1,9 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "regions": ["iad1"],
+  "rewrites": [
+    { "source": "/uploads/:path*", "destination": "/api/files/uploads/:path*" }
+  ]
+}

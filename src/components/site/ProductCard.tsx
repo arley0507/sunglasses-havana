@@ -2,72 +2,38 @@
 
 import { useState } from 'react'
 import type { CatalogProduct } from '@/lib/catalog-data'
-import { whatsappNumber } from '@/lib/catalog-data'
-import { blurData } from '@/lib/blurhash'
-import { Flame, MessageCircle, Plus } from 'lucide-react'
+import { OrderModal } from './OrderModal'
+import type { SiteConfig } from '@/lib/types'
 
-export function ProductCard({ product }: { product: CatalogProduct }) {
-  const [loaded, setLoaded] = useState(false)
-
-  const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    `Hola, quisiera pedir: ${product.name} (${product.price.toFixed(2)} USD). ¿Está disponible?`
-  )}`
+export function ProductCard({ product, config }: { product: CatalogProduct; config?: SiteConfig | null }) {
+  const [orderOpen, setOrderOpen] = useState(false)
+  const [showDesc, setShowDesc] = useState(false)
 
   return (
-    <article className="group bg-white rounded-2xl border border-[#E8DCC8] shadow-sm overflow-hidden flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all">
-      {/* Image */}
-      <div className="relative aspect-square bg-[#F4ECDD] overflow-hidden">
-        <img
-          src={product.imageSmall}
-          alt={product.name}
-          width={400}
-          height={400}
-          loading="lazy"
-          decoding="async"
-          onLoad={() => setLoaded(true)}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-            loaded ? 'opacity-100' : 'opacity-0'
-          } group-hover:scale-105 transition-transform`}
-          style={{
-            backgroundColor: '#F4ECDD',
-            backgroundImage: loaded ? undefined : `url(${blurData(product.blurKey)})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-        {product.trending && (
-          <div className="absolute top-2 left-2 inline-flex items-center gap-1 bg-[#E5533C] text-white text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full shadow-sm">
-            <Flame className="h-3 w-3 fill-current" /> Popular
+    <>
+      <div className="mb-4">
+        <button onClick={() => setOrderOpen(true)} className="block w-full text-left relative" aria-label={`Pedir ${product.name}`}>
+          <div className="rounded-lg bg-gray-100 w-full relative overflow-hidden border border-gray-100" style={{ paddingTop: '100%' }}>
+            <img src={product.imageSmall} alt={product.name} loading="lazy" decoding="async"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full object-cover" />
+            {product.note && (
+              <div className={`absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 flex items-end transition-opacity duration-300 ${showDesc ? 'opacity-100' : 'opacity-0'}`}>
+                <p className="text-white text-xs leading-snug">{product.note}</p>
+              </div>
+            )}
+            {product.trending && <span className="absolute top-1.5 left-1.5 z-10 inline-flex items-center bg-blue-100 text-blue-800 text-[9px] font-bold uppercase px-2 py-0.5 rounded">Popular</span>}
           </div>
-        )}
-        <div className="absolute top-2 right-2 inline-flex items-center justify-center bg-white/95 backdrop-blur-sm text-[#2A1A14] text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-          ${product.price.toFixed(2)} <span className="text-[#8A6F5A] font-semibold ml-0.5">USD</span>
+        </button>
+        <button onClick={() => setOrderOpen(true)} className="block w-full text-left mt-2 overflow-hidden mb-1 min-h-9">
+          <div className="line-clamp-2 text-[#0A1628] font-semibold text-sm leading-tight">{product.name}</div>
+        </button>
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-[#0A1628] font-bold text-base">{product.price.toFixed(2)} <span className="text-sm font-semibold">USD</span></span>
+          {product.note && <button onClick={() => setShowDesc(!showDesc)} className="text-blue-500 text-xs font-semibold hover:underline">{showDesc ? 'Ocultar' : 'Info'}</button>}
         </div>
+        <button onClick={() => setOrderOpen(true)} className="mt-2 w-full inline-flex items-center justify-center bg-[#0A1628] hover:bg-[#1a3a6a] active:scale-95 transition-all text-white text-xs font-bold py-2 rounded-full">Pedir</button>
       </div>
-
-      {/* Body */}
-      <div className="p-3 sm:p-4 flex flex-col flex-1">
-        <h3 className="font-bold text-[#2A1A14] text-sm sm:text-base leading-tight line-clamp-2 min-h-[2.4em]">
-          {product.name}
-        </h3>
-        {product.note && (
-          <p className="text-[#8A6F5A] mt-1 text-[11px] sm:text-xs line-clamp-2 leading-snug min-h-[2.6em]">
-            {product.note}
-          </p>
-        )}
-        <a
-          href={waLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-auto pt-2.5"
-          aria-label={`Pedir ${product.name} por WhatsApp`}
-        >
-          <span className="w-full inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1FB855] active:scale-95 transition-all text-white text-xs sm:text-sm font-bold py-2 rounded-full">
-            <MessageCircle className="h-3.5 w-3.5" />
-            Pedir por WhatsApp
-          </span>
-        </a>
-      </div>
-    </article>
+      {orderOpen && <OrderModal product={product} config={config} onClose={() => setOrderOpen(false)} />}
+    </>
   )
 }
