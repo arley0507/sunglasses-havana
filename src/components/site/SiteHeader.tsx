@@ -33,7 +33,6 @@ export function SiteHeader({
     <>
       <section className="bg-[#0A1628] fixed w-full max-w-lg top-0 z-30 flex h-14 left-1/2 -translate-x-1/2 shadow-md">
         <div className="flex px-4 py-2 items-center w-full">
-          {/* Logo */}
           <div className="flex-none flex items-center">
             <img
               src={logo}
@@ -45,22 +44,16 @@ export function SiteHeader({
               className="rounded-full w-10 h-10 object-cover ring-1 ring-white/20"
             />
           </div>
-
-          {/* Centered title */}
           <div className="flex-1 text-center">
             <span className="text-white font-bold text-sm uppercase tracking-wide">
               {business.name}
             </span>
           </div>
-
-          {/* Navigation */}
           <nav className="flex-none flex items-center gap-1">
             <button
               onClick={() => onViewChange('catalog')}
               className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
-                view === 'catalog'
-                  ? 'bg-white text-[#0A1628]'
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
+                view === 'catalog' ? 'bg-white text-[#0A1628]' : 'text-white/70 hover:text-white hover:bg-white/10'
               }`}
             >
               Catálogo
@@ -68,9 +61,7 @@ export function SiteHeader({
             <button
               onClick={() => onViewChange('contact')}
               className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
-                view === 'contact'
-                  ? 'bg-white text-[#0A1628]'
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
+                view === 'contact' ? 'bg-white text-[#0A1628]' : 'text-white/70 hover:text-white hover:bg-white/10'
               }`}
             >
               Contacto
@@ -79,7 +70,6 @@ export function SiteHeader({
         </div>
       </section>
 
-      {/* Floating cart button */}
       {mounted && cartMode && count > 0 && (
         <button
           data-cart-button
