@@ -1,0 +1,649 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useMemo, useRef, useState } from 'react'
+     4→import { Search, Minus, Plus, Send, MapPin, ChevronDown, Flame, ShoppingBag, MessageSquare, Clock, Croissant } from 'lucide-react'
+     5→import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+     6→import { Input } from '@/components/ui/input'
+     7→import { Button } from '@/components/ui/button'
+     8→import { toast } from 'sonner'
+     9→import type { Product, Category, Addon, Municipality, SiteConfig } from '@/lib/types'
+    10→import { useBackButtonModal } from '@/lib/use-back-button'
+    11→import { imageUrl } from '@/lib/image-url'
+    12→import { useCart } from '@/lib/cart-store'
+    13→import { flyToCart } from '@/lib/fly-animation'
+    14→import { useAddressHistory } from '@/lib/address-history'
+    15→
+    16→export default function CatalogView({
+    17→  config,
+    18→  configLoading,
+    19→}: {
+    20→  config: SiteConfig | null
+    21→  configLoading?: boolean
+    22→}) {
+    23→  const [products, setProducts] = useState<Product[]>([])
+    24→  const [categories, setCategories] = useState<Category[]>([])
+    25→  const [activeCategory, setActiveCategory] = useState<string>('Todos')
+    26→  const [search, setSearch] = useState('')
+    27→  const [loading, setLoading] = useState(true)
+    28→  const [orderProduct, setOrderProduct] = useState<Product | null>(null)
+    29→  const pillsRef = useRef<HTMLDivElement>(null)
+    30→
+    31→  useEffect(() => {
+    32→    Promise.all([
+    33→      fetch('/api/products').then((r) => r.json()),
+    34→      fetch('/api/categories').then((r) => r.json()),
+    35→    ])
+    36→      .then(([p, c]) => {
+    37→        setProducts(p.products || [])
+    38→        setCategories(c.categories || [])
+    39→      })
+    40→      .catch(() => toast.error('No se pudo cargar el catálogo'))
+    41→      .finally(() => setLoading(false))
+    42→  }, [])
+    43→
+    44→  const filtered = useMemo(() => {
+    45→    let list = products
+    46→    if (activeCategory !== 'Todos') {
+    47→      list = list.filter((p) => p.category?.name === activeCategory)
+    48→    }
+    49→    const q = search.trim().toLowerCase()
+    50→    if (q) {
+    51→      list = list.filter(
+    52→        (p) =>
+    53→          p.name.toLowerCase().includes(q) ||
+    54→          p.description.toLowerCase().includes(q)
+    55→      )
+    56→    }
+    57→    list = [...list].sort((a, b) => Number(b.featured) - Number(a.featured))
+    58→    return list
+    59→  }, [products, activeCategory, search])
+    60→
+    61→  const pillCategories = ['Todos', ...categories.map((c) => c.name)]
+    62→
+    63→  useEffect(() => {
+    64→    if (!pillsRef.current) return
+    65→    const activeEl = pillsRef.current.querySelector<HTMLButtonElement>(`[data-pill="${activeCategory}"]`)
+    66→    if (activeEl) {
+    67→      activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    68→    }
+    69→  }, [activeCategory])
+    70→
+    71→  return (
+    72→    <div className="relative">
+    73→      {/* Bakery banner */}
+    74→      {config && !configLoading && (
+    75→        <div className="bg-gradient-to-r from-[#2A1A1A] via-[#5A3A2A] to-[#2A1A1A] text-[#FFF8EE] py-3 px-4 text-center">
+    76→          <p className="text-xs sm:text-sm font-semibold flex items-center justify-center gap-2" style={{ fontFamily: 'var(--font-lora), serif' }}>
+    77→            <Croissant className="h-4 w-4 text-[#E32628]" />
+    78→            {config.tagline || 'Panadería artesanal'} — Horneado fresco cada día
+    79→          </p>
+    80→        </div>
+    81→      )}
+    82→
+    83→      <div className="relative max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-8" style={{ zIndex: 1 }}>
+    84→        {/* Search */}
+    85→        <div className="relative mb-3 sm:mb-4">
+    86→          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8A7A6A]" />
+    87→          <Input
+    88→            type="text"
+    89→            placeholder="Buscar producto..."
+    90→            value={search}
+    91→            onChange={(e) => setSearch(e.target.value)}
+    92→            className="pl-9 bg-white border-[#E8DCC8] focus-visible:ring-[#E32628]/30 h-11 rounded-full"
+    93→          />
+    94→        </div>
+    95→
+    96→        {/* Category pills - horizontal scroll */}
+    97→        <div
+    98→          ref={pillsRef}
+    99→          className="no-scrollbar flex gap-2 mb-5 sm:mb-6 overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2 snap-x snap-mandatory scroll-pl-3"
+   100→        >
+   101→          {loading ? (
+   102→            Array.from({ length: 6 }).map((_, i) => (
+   103→              <div
+   104→                key={i}
+   105→                className="flex-shrink-0 h-9 w-20 rounded-full bg-[#F2E8D5] animate-pulse"
+   106→              />
+   107→            ))
+   108→          ) : (
+   109→            pillCategories.map((name) => (
+   110→              <button
+   111→                key={name}
+   112→                data-pill={name}
+   113→                onClick={() => setActiveCategory(name)}
+   114→                className={`snap-start flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+   115→                  activeCategory === name
+   116→                    ? 'bg-[#E32628] text-[#FFFFFF] shadow-sm scale-105'
+   117→                    : 'bg-white text-[#5A3A2A] hover:bg-[#FBE8E8] border border-[#E8DCC8]'
+   118→                }`}
+   119→              >
+   120→                {name}
+   121→              </button>
+   122→            ))
+   123→          )}
+   124→        </div>
+   125→
+   126→        {/* Grid */}
+   127→        {loading ? (
+   128→          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+   129→            {Array.from({ length: 8 }).map((_, i) => (
+   130→              <div
+   131→                key={i}
+   132→                className="bg-white rounded-2xl border border-[#E8DCC8] shadow-sm overflow-hidden"
+   133→              >
+   134→                <div className="aspect-square bg-[#F2E8D5] animate-pulse" />
+   135→                <div className="p-3 space-y-2">
+   136→                  <div className="h-3 bg-[#F2E8D5] rounded animate-pulse w-3/4" />
+   137→                  <div className="h-2 bg-[#F2E8D5] rounded animate-pulse w-full" />
+   138→                  <div className="h-2 bg-[#F2E8D5] rounded animate-pulse w-2/3" />
+   139→                  <div className="h-7 bg-[#F2E8D5]/70 rounded-full animate-pulse mt-2" />
+   140→                </div>
+   141→              </div>
+   142→            ))}
+   143→          </div>
+   144→        ) : filtered.length === 0 ? (
+   145→          <div className="text-center py-16">
+   146→            <div className="inline-flex h-16 w-16 rounded-full bg-[#FBE8E8] items-center justify-center mb-3">
+   147→              <Search className="h-7 w-7 text-[#E32628]" />
+   148→            </div>
+   149→            <p className="text-[#8A7A6A]">No se encontraron productos.</p>
+   150→          </div>
+   151→        ) : (
+   152→          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+   153→            {filtered.map((p) => (
+   154→              <ProductCard key={p.id} product={p} onOrder={() => setOrderProduct(p)} />
+   155→            ))}
+   156→          </div>
+   157→        )}
+   158→      </div>
+   159→
+   160→      {/* Order modal */}
+   161→      {orderProduct && (
+   162→        <OrderModal
+   163→          product={orderProduct}
+   164→          config={config}
+   165→          onClose={() => setOrderProduct(null)}
+   166→        />
+   167→      )}
+   168→    </div>
+   169→  )
+   170→}
+   171→
+   172→function ProductCard({ product, onOrder }: { product: Product; onOrder: () => void }) {
+   173→  return (
+   174→    <article
+   175→      className="bg-white rounded-2xl border border-[#E8DCC8] shadow-sm overflow-hidden flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all"
+   176→    >
+   177→      <div className="relative aspect-square bg-[#F2E8D5]">
+   178→        {product.imageUrl ? (
+   179→          <img
+   180→            src={imageUrl(product.imageUrl)}
+   181→            alt={product.name}
+   182→            className="w-full h-full object-cover"
+   183→            loading="lazy"
+   184→          />
+   185→        ) : (
+   186→          <div className="w-full h-full flex items-center justify-center text-[#8A7A6A] text-xs">
+   187→            Sin imagen
+   188→          </div>
+   189→        )}
+   190→        {product.featured && (
+   191→          <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 inline-flex items-center gap-1 bg-[#E32628] text-[#FFFFFF] text-[9px] sm:text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-sm">
+   192→            <Flame className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" /> Top
+   193→          </div>
+   194→        )}
+   195→      </div>
+   196→      <div className="p-2.5 sm:p-4 flex flex-col flex-1">
+   197→        <h3
+   198→          className="font-bold text-[#2A1A1A] text-xs sm:text-base leading-tight line-clamp-2 min-h-[2.4em] sm:min-h-[3.2em]"
+   199→          style={{ fontFamily: 'var(--font-lora), serif' }}
+   200→        >
+   201→          {product.name}
+   202→        </h3>
+   203→        <p className="text-[#8A7A6A] mt-1 text-[10px] sm:text-sm line-clamp-2 leading-snug min-h-[2.6em] sm:min-h-[3.6em]">
+   204→          {product.description}
+   205→        </p>
+   206→        <p className="text-[#E32628] font-extrabold mt-1.5 sm:mt-2 text-base sm:text-lg whitespace-nowrap">
+   207→          ${Math.round(product.price)} <span className="text-xs sm:text-sm font-semibold">CUP</span>
+   208→        </p>
+   209→        <button
+   210→          onClick={onOrder}
+   211→          className="mt-auto w-full inline-flex items-center justify-center bg-[#E32628] hover:bg-[#C41E20] active:scale-95 text-[#FFFFFF] text-xs sm:text-sm font-bold py-2 rounded-full transition-all"
+   212→        >
+   213→          Pedir
+   214→        </button>
+   215→      </div>
+   216→    </article>
+   217→  )
+   218→}
+   219→
+   220→function OrderModal({
+   221→  product,
+   222→  config,
+   223→  onClose,
+   224→}: {
+   225→  product: Product
+   226→  config: SiteConfig | null
+   227→  onClose: () => void
+   228→}) {
+   229→  useBackButtonModal(true, onClose)
+   230→
+   231→  const [qty, setQty] = useState(1)
+   232→  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([])
+   233→  const [municipalities, setMunicipalities] = useState<Municipality[]>([])
+   234→  const [municipalityId, setMunicipalityId] = useState<string>('')
+   235→  const [neighborhoodId, setNeighborhoodId] = useState<string>('')
+   236→  const [streets, setStreets] = useState('')
+   237→  const [zonesLoading, setZonesLoading] = useState(true)
+   238→
+   239→  // Cart state
+   240→  const cartMode = useCart((s) => s.cartMode)
+   241→  const enableCartMode = useCart((s) => s.enableCartMode)
+   242→  const addItemToCart = useCart((s) => s.addItem)
+   243→  const productImageRef = useRef<HTMLImageElement>(null)
+   244→  const { history: addressHistory, addAddress } = useAddressHistory()
+   245→
+   246→  const setCartMode = (on: boolean) => {
+   247→    if (on) {
+   248→      enableCartMode()
+   249→    }
+   250→  }
+   251→
+   252→  const addToCart = () => {
+   253→    const cartItem = {
+   254→      productId: product.id,
+   255→      name: product.name,
+   256→      description: product.description,
+   257→      price: product.price,
+   258→      imageUrl: product.imageUrl,
+   259→      qty,
+   260→      addons: selectedAddons.map((a) => ({ id: a.id, name: a.name, price: a.price })),
+   261→    }
+   262→    // Fly animation: find the product image in the modal
+   263→    const imgEl = productImageRef.current || document.querySelector('[data-modal-product-image]') as HTMLElement | null
+   264→    const cartBtn = document.querySelector('[data-cart-button]') as HTMLElement | null
+   265→    if (imgEl && cartBtn) {
+   266→      flyToCart(imgEl, cartBtn, () => {
+   267→        addItemToCart(cartItem, qty)
+   268→        toast.success(`${product.name} agregado al carrito`, { duration: 2000 })
+   269→        onClose()
+   270→      })
+   271→    } else {
+   272→      addItemToCart(cartItem, qty)
+   273→      toast.success(`${product.name} agregado al carrito`, { duration: 2000 })
+   274→      onClose()
+   275→    }
+   276→  }
+   277→
+   278→  const addons: Addon[] = product.addons || []
+   279→  const [globalAddons, setGlobalAddons] = useState<Addon[]>([])
+   280→  useEffect(() => {
+   281→    fetch('/api/addons')
+   282→      .then((r) => r.json())
+   283→      .then((d) => setGlobalAddons(d.addons || []))
+   284→      .catch(() => {})
+   285→    fetch('/api/municipalities')
+   286→      .then((r) => r.json())
+   287→      .then((d) => {
+   288→        setMunicipalities(d.municipalities || [])
+   289→        setZonesLoading(false)
+   290→      })
+   291→      .catch(() => setZonesLoading(false))
+   292→  }, [])
+   293→
+   294→  const allAddons = useMemo(() => {
+   295→    const map = new Map<string, Addon>()
+   296→    for (const a of globalAddons) map.set(a.id, a)
+   297→    for (const a of addons) map.set(a.id, a)
+   298→    return Array.from(map.values()).sort((a, b) => a.sortOrder - b.sortOrder)
+   299→  }, [addons, globalAddons])
+   300→
+   301→  const selectedAddons = allAddons.filter((a) => selectedAddonIds.includes(a.id))
+   302→  const addonsTotal = selectedAddons.reduce((s, a) => s + a.price, 0)
+   303→
+   304→  const selectedMunicipality = municipalities.find((m) => m.id === municipalityId)
+   305→  const selectedNeighborhood =
+   306→    selectedMunicipality?.neighborhoods?.find((n) => n.id === neighborhoodId) || null
+   307→  const deliveryPrice = selectedNeighborhood?.price ?? 0
+   308→
+   309→  const unitPrice = product.price + addonsTotal
+   310→  const subtotal = unitPrice * qty
+   311→  const total = subtotal + deliveryPrice
+   312→  const whatsapp = config?.whatsappNumber || '15551234567'
+   313→
+   314→  const toggleAddon = (id: string) => {
+   315→    setSelectedAddonIds((arr) =>
+   316→      arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]
+   317→    )
+   318→  }
+   319→
+   320→  const fmtPrice = (n: number) => `$${Math.round(n)} CUP`
+   321→
+   322→  const buildMessage = () => {
+   323→    const addonsText =
+   324→      selectedAddons.length > 0
+   325→        ? selectedAddons.map((a) => `${a.name} (+${fmtPrice(a.price)})`).join(', ')
+   326→        : ''
+   327→
+   328→    const fullAddress = `${selectedNeighborhood!.name}, ${selectedMunicipality!.name} — ${streets.trim()}`
+   329→
+   330→    const template =
+   331→      config?.orderMessageTemplate ||
+   332→      `Nuevo pedido - {business}\n\nPlato: {product}\nCantidad: {qty}\nPrecio unitario: {unitPrice}\nTotal: {total}\n\nDireccion: {address}`
+   333→
+   334→    return template
+   335→      .replace(/\{business\}/g, config?.businessName || 'Sabora')
+   336→      .replace(/\{product\}/g, product.name)
+   337→      .replace(/\{qty\}/g, String(qty))
+   338→      .replace(/\{unitPrice\}/g, fmtPrice(unitPrice))
+   339→      .replace(/\{total\}/g, fmtPrice(total))
+   340→      .replace(/\{address\}/g, fullAddress)
+   341→      .replace(/\{addons\}/g, addonsText)
+   342→      .replace(/\{companions\}/g, '')
+   343→  }
+   344→
+   345→  const submit = (method: 'whatsapp' | 'sms') => {
+   346→    if (!municipalityId || !neighborhoodId) {
+   347→      toast.error('Selecciona tu municipio y barrio')
+   348→      return
+   349→    }
+   350→    if (!streets.trim()) {
+   351→      toast.error('Por favor ingresa las calles de tu dirección')
+   352→      return
+   353→    }
+   354→
+   355→    const message = buildMessage()
+   356→    const text = encodeURIComponent(message)
+   357→
+   358→    if (method === 'whatsapp') {
+   359→      window.open(`https://wa.me/${whatsapp}?text=${text}`, '_blank')
+   360→      toast.success('Pedido enviado por WhatsApp', { duration: 6000 })
+   361→    } else {
+   362→      const phone = config?.phoneDisplay || ''
+   363→      const cleanPhone = phone.replace(/[^\d+]/g, '')
+   364→      window.open(`sms:${cleanPhone}?body=${text}`, '_blank')
+   365→      toast.success('Abriendo app de mensajes...', { duration: 5000 })
+   366→    }
+   367→
+   368→    // Save address to history
+   369→    if (selectedMunicipality && selectedNeighborhood) {
+   370→      addAddress({
+   371→        municipalityId,
+   372→        municipalityName: selectedMunicipality.name,
+   373→        neighborhoodId,
+   374→        neighborhoodName: selectedNeighborhood.name,
+   375→        streets: streets.trim(),
+   376→      })
+   377→    }
+   378→
+   379→    onClose()
+   380→  }
+   381→
+   382→  return (
+   383→    <Dialog open onOpenChange={(o) => !o && onClose()}>
+   384→      <DialogContent className="sm:max-w-[480px] p-5 sm:p-6 max-h-[92vh] overflow-y-auto rincon-scroll rounded-3xl">
+   385→        <DialogHeader className="flex flex-row items-start gap-3 space-y-0">
+   386→          <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-2xl overflow-hidden bg-[#F2E8D5] flex-shrink-0">
+   387→            {product.imageUrl && (
+   388→              <img
+   389→                ref={productImageRef}
+   390→                data-modal-product-image
+   391→                src={imageUrl(product.imageUrl)}
+   392→                alt={product.name}
+   393→                className="w-full h-full object-cover"
+   394→              />
+   395→            )}
+   396→          </div>
+   397→          <div className="flex-1 min-w-0">
+   398→            <DialogTitle
+   399→              className="text-base sm:text-lg font-bold leading-tight text-[#2A1A1A]"
+   400→              style={{ fontFamily: 'var(--font-lora), serif' }}
+   401→            >
+   402→              {product.name}
+   403→            </DialogTitle>
+   404→            <p className="text-xs sm:text-sm text-[#8A7A6A] mt-1">
+   405→              {product.description}
+   406→            </p>
+   407→            <p className="text-[#E32628] font-extrabold mt-1 text-base sm:text-lg whitespace-nowrap">
+   408→              ${Math.round(product.price)} <span className="text-xs sm:text-sm font-semibold">CUP</span>
+   409→            </p>
+   410→          </div>
+   411→        </DialogHeader>
+   412→
+   413→        <div className="space-y-4 mt-3">
+   414→          {/* Quantity */}
+   415→          <div>
+   416→            <label className="text-sm font-bold text-[#2A1A1A] block mb-1.5">Cantidad</label>
+   417→            <div className="inline-flex items-center gap-2 bg-[#FFF8EE] rounded-full p-1">
+   418→              <button
+   419→                onClick={() => setQty((q) => Math.max(1, q - 1))}
+   420→                disabled={qty <= 1}
+   421→                className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-[#E8DCC8] text-[#2A1A1A] disabled:opacity-40 hover:bg-[#FBE8E8]"
+   422→                aria-label="Disminuir"
+   423→              >
+   424→                <Minus className="h-4 w-4" />
+   425→              </button>
+   426→              <span className="w-10 text-center font-bold text-lg text-[#2A1A1A]">{qty}</span>
+   427→              <button
+   428→                onClick={() => setQty((q) => q + 1)}
+   429→                className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-[#E8DCC8] text-[#2A1A1A] hover:bg-[#FBE8E8]"
+   430→                aria-label="Aumentar"
+   431→              >
+   432→                <Plus className="h-4 w-4" />
+   433→              </button>
+   434→            </div>
+   435→          </div>
+   436→
+   437→          {/* Addons */}
+   438→          {allAddons.length > 0 && (
+   439→            <div>
+   440→              <label className="text-sm font-bold text-[#2A1A1A] block mb-1.5">
+   441→                Agregos
+   442→              </label>
+   443→              <p className="text-xs text-[#8A7A6A] mb-2">
+   444→                Toca para añadir. El precio se suma al total.
+   445→              </p>
+   446→              <div className="flex flex-wrap gap-2">
+   447→                {allAddons.map((a) => {
+   448→                  const selected = selectedAddonIds.includes(a.id)
+   449→                  return (
+   450→                    <button
+   451→                      key={a.id}
+   452→                      type="button"
+   453→                      onClick={() => toggleAddon(a.id)}
+   454→                      className={`group inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold border transition-all active:scale-95 ${
+   455→                        selected
+   456→                          ? 'bg-[#E32628] text-[#FFFFFF] border-[#E32628] shadow-sm'
+   457→                          : 'bg-white text-[#2A1A1A] border-[#E8DCC8] hover:border-[#E32628]/50 hover:bg-[#FBE8E8]'
+   458→                      }`}
+   459→                    >
+   460→                      <span>{a.name}</span>
+   461→                      <span
+   462→                        className={`text-xs font-bold ${
+   463→                          selected ? 'text-[#FFFFFF]/90' : 'text-[#E32628]'
+   464→                        }`}
+   465→                      >
+   466→                        +{fmtPrice(a.price)}
+   467→                      </span>
+   468→                    </button>
+   469→                  )
+   470→                })}
+   471→              </div>
+   472→            </div>
+   473→          )}
+   474→
+   475→          {/* Delivery zone — only shown in single-order mode (not cart mode) */}
+   476→          {!cartMode && (
+   477→          <div className="space-y-3 p-3 bg-[#FFF8EE] rounded-2xl border border-[#E8DCC8]">
+   478→            <div className="flex items-center gap-1.5 text-sm font-bold text-[#2A1A1A]">
+   479→              <MapPin className="h-4 w-4 text-[#E32628]" /> Dirección de entrega
+   480→            </div>
+   481→
+   482→            <div>
+   483→              <label className="text-xs font-bold text-[#2A1A1A] block mb-1">
+   484→                Municipio
+   485→              </label>
+   486→              <div className="relative">
+   487→                <select
+   488→                  value={municipalityId}
+   489→                  onChange={(e) => {
+   490→                    setMunicipalityId(e.target.value)
+   491→                    setNeighborhoodId('')
+   492→                  }}
+   493→                  disabled={zonesLoading}
+   494→                  className="w-full h-10 pl-3 pr-9 rounded-full border border-[#E8DCC8] bg-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#E32628]/30 disabled:opacity-50"
+   495→                >
+   496→                  <option value="">
+   497→                    {zonesLoading ? 'Cargando municipios...' : 'Selecciona tu municipio'}
+   498→                  </option>
+   499→                  {municipalities.map((m) => (
+   500→                    <option key={m.id} value={m.id}>
+   501→                      {m.name}
+   502→                    </option>
+   503→                  ))}
+   504→                </select>
+   505→                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8A7A6A] pointer-events-none" />
+   506→              </div>
+   507→            </div>
+   508→
+   509→            <div>
+   510→              <label className="text-xs font-bold text-[#2A1A1A] block mb-1">
+   511→                Barrio
+   512→              </label>
+   513→              <div className="relative">
+   514→                <select
+   515→                  value={neighborhoodId}
+   516→                  onChange={(e) => setNeighborhoodId(e.target.value)}
+   517→                  disabled={!municipalityId}
+   518→                  className="w-full h-10 pl-3 pr-9 rounded-full border border-[#E8DCC8] bg-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#E32628]/30 disabled:opacity-50"
+   519→                >
+   520→                  <option value="">
+   521→                    {!municipalityId
+   522→                      ? 'Primero selecciona el municipio'
+   523→                      : 'Selecciona tu barrio'}
+   524→                  </option>
+   525→                  {selectedMunicipality?.neighborhoods?.map((n) => (
+   526→                    <option key={n.id} value={n.id}>
+   527→                      {n.name} — mensajería {fmtPrice(n.price ?? 0)}
+   528→                    </option>
+   529→                  ))}
+   530→                </select>
+   531→                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8A7A6A] pointer-events-none" />
+   532→              </div>
+   533→            </div>
+   534→
+   535→            <div>
+   536→              <label className="text-xs font-bold text-[#2A1A1A] block mb-1">
+   537→                Calles (referencia de tu dirección)
+   538→              </label>
+   539→              <Input
+   540→                value={streets}
+   541→                onChange={(e) => setStreets(e.target.value)}
+   542→                placeholder="Ej: Calle 23 esquina H, edificio 45, apto 3"
+   543→                disabled={!neighborhoodId}
+   544→                className="rounded-full"
+   545→              />
+   546→              <p className="text-[11px] text-[#8A7A6A] mt-1">
+   547→                Escribe solo las calles y referencias. El municipio y barrio se seleccionan arriba.
+   548→              </p>
+   549→
+   550→              {/* Saved address suggestions */}
+   551→              {addressHistory.length > 0 && (
+   552→                <div className="mt-2 space-y-1">
+   553→                  <p className="text-[11px] text-[#8A7A6A] flex items-center gap-1">
+   554→                    <Clock className="h-3 w-3" /> Direcciones anteriores:
+   555→                  </p>
+   556→                  {addressHistory.slice(0, 3).map((addr, i) => (
+   557→                    <button
+   558→                      key={i}
+   559→                      onClick={() => {
+   560→                        setMunicipalityId(addr.municipalityId)
+   561→                        setNeighborhoodId(addr.neighborhoodId)
+   562→                        setStreets(addr.streets)
+   563→                      }}
+   564→                      className="w-full text-left px-3 py-2 rounded-lg bg-[#FFF8EE] hover:bg-[#FBE8E8] border border-[#E8DCC8] text-xs text-[#2A1A1A] transition-colors"
+   565→                    >
+   566→                      <span className="font-semibold">{addr.neighborhoodName}</span>
+   567→                      <span className="text-[#8A7A6A]">, {addr.municipalityName}</span>
+   568→                      <span className="block text-[#8A7A6A] mt-0.5 truncate">{addr.streets}</span>
+   569→                    </button>
+   570→                  ))}
+   571→                </div>
+   572→              )}
+   573→            </div>
+   574→          </div>
+   575→          )}
+   576→
+   577→          {/* Total breakdown + action buttons */}
+   578→          <div className="space-y-2 pt-3 border-t border-[#E8DCC8]">
+   579→            {/* In cart mode, only show subtotal (no delivery) */}
+   580→            {cartMode ? (
+   581→              <>
+   582→                <div className="flex items-center justify-between text-sm">
+   583→                  <span className="text-[#8A7A6A]">
+   584→                    Subtotal ({qty} × {fmtPrice(unitPrice)})
+   585→                  </span>
+   586→                  <span className="text-[#2A1A1A] font-semibold">{fmtPrice(subtotal)}</span>
+   587→                </div>
+   588→                <div className="flex gap-2">
+   589→                  <Button
+   590→                    onClick={addToCart}
+   591→                    className="flex-1 bg-[#E32628] hover:bg-[#C41E20] text-[#FFFFFF] h-11 rounded-full font-bold"
+   592→                  >
+   593→                    <ShoppingBag className="h-4 w-4 mr-1" /> Agregar al carrito
+   594→                  </Button>
+   595→                </div>
+   596→                <p className="text-[11px] text-[#8A7A6A] text-center">
+   597→                  Se agregará al carrito. Podrás pedir más productos y pagar todo junto.
+   598→                </p>
+   599→              </>
+   600→            ) : (
+   601→              <>
+   602→                <div className="flex items-center justify-between text-sm">
+   603→                  <span className="text-[#8A7A6A]">
+   604→                    Subtotal ({qty} × {fmtPrice(unitPrice)})
+   605→                  </span>
+   606→                  <span className="text-[#2A1A1A] font-semibold">{fmtPrice(subtotal)}</span>
+   607→                </div>
+   608→                <div className="flex items-center justify-between text-sm">
+   609→                  <span className="text-[#8A7A6A]">Mensajería</span>
+   610→                  <span className="text-[#2A1A1A] font-semibold">
+   611→                    {selectedNeighborhood ? fmtPrice(deliveryPrice) : '—'}
+   612→                  </span>
+   613→                </div>
+   614→                <div className="flex items-center justify-between pt-1">
+   615→                  <div>
+   616→                    <p className="text-xs text-[#8A7A6A]">Total estimado</p>
+   617→                    <p className="text-[#E32628] font-extrabold text-xl">{fmtPrice(total)}</p>
+   618→                  </div>
+   619→                </div>
+   620→                {/* Send buttons: WhatsApp + SMS */}
+   621→                <Button
+   622→                  onClick={() => submit('whatsapp')}
+   623→                  className="w-full bg-[#E32628] hover:bg-[#C41E20] text-[#FFFFFF] h-11 rounded-full font-bold"
+   624→                >
+   625→                  <Send className="h-4 w-4 mr-2" /> Pedir por WhatsApp
+   626→                </Button>
+   627→                <Button
+   628→                  onClick={() => submit('sms')}
+   629→                  variant="outline"
+   630→                  className="w-full bg-white border-2 border-[#E32628] text-[#E32628] hover:bg-[#FBE8E8] h-11 rounded-full font-bold"
+   631→                >
+   632→                  <MessageSquare className="h-4 w-4 mr-2" /> Enviar por SMS
+   633→                </Button>
+   634→                {/* Prominent "Hacer Varios Pedidos" button */}
+   635→                <button
+   636→                  onClick={() => setCartMode(true)}
+   637→                  className="w-full mt-1 inline-flex items-center justify-center gap-2 bg-[#FBE8E8] border-2 border-[#E32628]/30 text-[#E32628] hover:bg-[#F2E8D5] h-11 rounded-full font-bold text-sm transition-all"
+   638→                >
+   639→                  <ShoppingBag className="h-4 w-4" /> Hacer Varios Pedidos
+   640→                </button>
+   641→              </>
+   642→            )}
+   643→          </div>
+   644→        </div>
+   645→      </DialogContent>
+   646→    </Dialog>
+   647→  )
+   648→}
+   649→
