@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { useCart } from '@/lib/cart-store'
 import { useBackButtonModal } from '@/lib/use-back-button'
 import { imageUrl } from '@/lib/image-url'
-import { flyToCart } from '@/lib/fly-animation'
+import { flyToCart, flyToTop } from '@/lib/fly-animation'
 import { toast } from 'sonner'
 import type { CatalogProduct } from '@/lib/catalog-data'
 import { whatsappNumber } from '@/lib/catalog-data'
@@ -118,7 +118,15 @@ export function OrderModal({ product, config, onClose }: { product: CatalogProdu
               <div className="flex items-center justify-between"><span className="text-xs text-gray-600">Total</span><span className="text-black font-extrabold text-lg">{selectedNeighborhood ? `${fmtPrice(subtotal)} + ${fmtCUP(deliveryPrice)}` : fmtPrice(subtotal)}</span></div>
               <button onClick={() => submit('whatsapp')} className="w-full bg-[#25D366] hover:bg-[#1FB855] text-white h-10 rounded-full font-bold flex items-center justify-center gap-2 active:scale-95 text-sm"><Send className="h-4 w-4" /> Pedir por WhatsApp</button>
               <button onClick={() => submit('sms')} className="w-full bg-white border-2 border-gray-800 text-black hover:bg-gray-50 h-10 rounded-full font-bold flex items-center justify-center gap-2 active:scale-95 text-sm"><MessageSquare className="h-4 w-4" /> Enviar por SMS</button>
-              <button onClick={() => enableCartMode()} className="w-full inline-flex items-center justify-center gap-2 bg-gray-100 border-2 border-gray-300 text-black hover:bg-gray-200 h-10 rounded-full font-bold text-xs"><ShoppingBag className="h-3.5 w-3.5" /> Hacer Varios Pedidos</button>
+              <button onClick={() => {
+              const imgEl = productImageRef.current
+              onClose()
+              enableCartMode()
+              if (imgEl) {
+                flyToTop(imgEl)
+              }
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }} className="w-full inline-flex items-center justify-center gap-2 bg-gray-100 border-2 border-gray-300 text-black hover:bg-gray-200 h-10 rounded-full font-bold text-xs"><ShoppingBag className="h-3.5 w-3.5" /> Hacer Varios Pedidos</button>
             </>
           )}
         </div>
