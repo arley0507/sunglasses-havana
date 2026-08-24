@@ -13,8 +13,10 @@ export async function login(username: string, password: string): Promise<boolean
 export async function setSessionCookie(token: string) {
   const store = await cookies()
   store.set(SESSION_COOKIE, token, {
-    httpOnly: true, sameSite: 'lax', path: '/',
-    maxAge: 60 * 60 * 24 * 365 * 10, secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365 * 10, // 10 years
   })
 }
 

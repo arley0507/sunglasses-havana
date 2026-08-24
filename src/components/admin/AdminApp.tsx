@@ -10,19 +10,25 @@ export default function AdminApp() {
   const [config, setConfig] = useState<SiteConfig | null>(null)
 
   useEffect(() => {
-    // Small delay to ensure cookies are available after reload
-    const timer = setTimeout(() => {
-      fetch('/api/auth/me')
-        .then(r => r.json())
-        .then(d => setAuthed(d.authenticated === true))
-        .catch(() => setAuthed(false))
-    }, 100)
-    return () => clearTimeout(timer)
+    // Check auth via API — cookies are sent automatically for same-origin
+    let cancelled = false
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'same-origin' })
+        const d = await res.json()
+        if (!cancelled) setAuthed(d.authenticated === true)
+      } catch {
+        if (!cancelled) setAuthed(false)
+      }
+    }
+    // Slight delay to ensure cookies are available after reload
+    const timer = setTimeout(checkAuth, 200)
+    return () => { cancelled = true; clearTimeout(timer) }
   }, [])
 
   useEffect(() => {
     if (authed === true) {
-      fetch('/api/config')
+      fetch('/api/config', { credentials: 'same-origin' })
         .then(r => r.json())
         .then(d => { if (d.config) setConfig(d.config) })
         .catch(() => {})
