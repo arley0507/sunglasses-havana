@@ -47,9 +47,9 @@ export default function Home() {
   const loadData = useCallback(async () => {
     try {
       const [configRes, productsRes, categoriesRes] = await Promise.all([
-        fetch('/api/config').then(r => r.json()),
-        fetch('/api/products').then(r => r.json()),
-        fetch('/api/categories').then(r => r.json()),
+        fetch('/api/config', { cache: 'no-store' }).then(r => r.json()),
+        fetch('/api/products', { cache: 'no-store' }).then(r => r.json()),
+        fetch('/api/categories', { cache: 'no-store' }).then(r => r.json()),
       ])
       if (configRes.config) setConfig({ ...defaultConfig, ...configRes.config })
       if (productsRes.products) setDynamicProducts(productsRes.products)

@@ -42,13 +42,15 @@ export function CategoryTabs({ categories }: { categories: Category[] }) {
 
   return (
     <div className="bg-white border-b border-gray-100 w-full max-w-lg" style={{ position: 'sticky', top: '56px', left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
-      <div ref={navRef} className="flex gap-3 overflow-x-auto no-scrollbar px-4 py-2.5 items-center justify-start sm:justify-center">
-        {categories.map(c => (
-          <a key={c.slug} href={`#c-${c.slug}`} data-slug={c.slug} onClick={e => handleClick(c.slug, e)}
-            className={`flex-shrink-0 text-sm font-bold whitespace-nowrap transition-colors ${active === c.slug ? 'text-[#0A1628] border-b-2 border-[#0A1628] pb-1' : 'text-gray-400 hover:text-[#0A1628]'}`}>
-            {c.name}
-          </a>
-        ))}
+      <div className="overflow-x-auto no-scrollbar px-4 py-2.5">
+        <div ref={navRef} className="inline-flex gap-3 items-center" style={{ minWidth: '100%', justifyContent: 'center' }}>
+          {categories.map(c => (
+            <a key={c.slug} href={`#c-${c.slug}`} data-slug={c.slug} onClick={e => handleClick(c.slug, e)}
+              className={`flex-shrink-0 text-sm font-bold whitespace-nowrap transition-colors ${active === c.slug ? 'text-[#0A1628] border-b-2 border-[#0A1628] pb-1' : 'text-gray-400 hover:text-[#0A1628]'}`}>
+              {c.name}
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   )
