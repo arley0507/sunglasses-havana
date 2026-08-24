@@ -5,38 +5,48 @@ import { AdminLogin } from './AdminLogin'
 import AdminShell from './AdminShell'
 import type { SiteConfig } from '@/lib/types'
 
+const TOKEN = 'sunglasses-havana-admin-session-valid'
+const COOKIE_NAME = 'sunglasses_admin_session'
+
 export default function AdminApp() {
   const [authed, setAuthed] = useState<boolean | null>(null)
   const [config, setConfig] = useState<SiteConfig | null>(null)
 
+  // Check auth on mount
   useEffect(() => {
-    // Check auth via API — cookies are sent automatically for same-origin
-    let cancelled = false
-    const checkAuth = async () => {
-      try {
-        const res = await fetch('/api/auth/me', { credentials: 'same-origin' })
-        const d = await res.json()
-        if (!cancelled) setAuthed(d.authenticated === true)
-      } catch {
-        if (!cancelled) setAuthed(false)
-      }
+    // First check if we have the cookie set via document.cookie
+    const cookies = document.cookie.split(';').reduce((acc, c) => {
+      const [k, ...v] = c.trim().split('=')
+      acc[k] = v.join('=')
+      return acc
+    }, {} as Record<string, string>)
+
+    if (cookies[COOKIE_NAME] === TOKEN) {
+      setAuthed(true)
+    } else {
+      setAuthed(false)
     }
-    // Slight delay to ensure cookies are available after reload
-    const timer = setTimeout(checkAuth, 200)
-    return () => { cancelled = true; clearTimeout(timer) }
   }, [])
 
+  // Load config when authed
   useEffect(() => {
     if (authed === true) {
-      fetch('/api/config', { credentials: 'same-origin' })
+      fetch('/api/config', { credentials: 'include' })
         .then(r => r.json())
         .then(d => { if (d.config) setConfig(d.config) })
         .catch(() => {})
     }
   }, [authed])
 
+  const handleLogin = () => {
+    // Set cookie via document.cookie (client-side, persists across reloads)
+    document.cookie = `${COOKIE_NAME}=${TOKEN}; path=/; max-age=${60 * 60 * 24 * 365 * 10}; SameSite=Lax`
+    setAuthed(true)
+  }
+
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`
+    try { await fetch('/api/auth/logout', { method: 'POST' }) } catch {}
     setAuthed(false)
     setConfig(null)
   }
@@ -49,6 +59,6 @@ export default function AdminApp() {
     )
   }
 
-  if (!authed) return <AdminLogin onLoggedIn={() => setAuthed(true)} />
+  if (!authed) return <AdminLogin onLoggedIn={handleLogin} />
   return <AdminShell config={config} onLogout={logout} />
 }

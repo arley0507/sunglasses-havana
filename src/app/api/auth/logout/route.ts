@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
-import { clearSessionCookie } from '@/lib/auth'
+import { SESSION_COOKIE } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST() {
-  await clearSessionCookie()
-  return NextResponse.json({ success: true })
+  const res = NextResponse.json({ success: true })
+  res.cookies.set(SESSION_COOKIE, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  })
+  return res
 }

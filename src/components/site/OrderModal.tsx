@@ -1,16 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Minus, Plus, Send, MapPin, ChevronDown, ShoppingBag, MessageSquare } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useCart } from '@/lib/cart-store'
 import { useBackButtonModal } from '@/lib/use-back-button'
 import { imageUrl } from '@/lib/image-url'
+import { flyToCart } from '@/lib/fly-animation'
 import { toast } from 'sonner'
 import type { CatalogProduct } from '@/lib/catalog-data'
 import { whatsappNumber } from '@/lib/catalog-data'
-import type { SiteConfig, Municipality, Addon } from '@/lib/types'
+import type { SiteConfig, Municipality } from '@/lib/types'
 
 const fmtPrice = (n: number) => `$${n.toFixed(2)} USD`
 const fmtCUP = (n: number) => `$${Math.round(n)} CUP`
@@ -26,6 +27,7 @@ export function OrderModal({ product, config, onClose }: { product: CatalogProdu
   const cartMode = useCart(s => s.cartMode)
   const enableCartMode = useCart(s => s.enableCartMode)
   const addItemToCart = useCart(s => s.addItem)
+  const productImageRef = useRef<HTMLImageElement>(null)
 
   useEffect(() => {
     fetch('/api/municipalities').then(r => r.json()).then(d => { setMunicipalities(d.municipalities || []); setZonesLoading(false) }).catch(() => setZonesLoading(false))
@@ -52,9 +54,20 @@ export function OrderModal({ product, config, onClose }: { product: CatalogProdu
   }
 
   const addToCart = () => {
-    addItemToCart({ productId: product.id, slug: product.slug, name: product.name, description: product.note, note: product.note, price: product.price, imageUrl: product.imageSmall, qty, addons: [] }, qty)
-    toast.success(`${product.name} agregado al carrito`)
-    onClose()
+    const cartItem = { productId: product.id, slug: product.slug, name: product.name, description: product.note, note: product.note, price: product.price, imageUrl: product.imageSmall, qty, addons: [] as any[] }
+    const imgEl = productImageRef.current || document.querySelector('[data-modal-product-image]') as HTMLElement | null
+    const cartBtn = document.querySelector('[data-cart-button]') as HTMLElement | null
+    if (imgEl && cartBtn) {
+      flyToCart(imgEl, cartBtn, () => {
+        addItemToCart(cartItem, qty)
+        toast.success(`${product.name} agregado al carrito`, { duration: 2000 })
+        onClose()
+      })
+    } else {
+      addItemToCart(cartItem, qty)
+      toast.success(`${product.name} agregado al carrito`, { duration: 2000 })
+      onClose()
+    }
   }
 
   return (
@@ -62,7 +75,7 @@ export function OrderModal({ product, config, onClose }: { product: CatalogProdu
       <DialogContent className="sm:max-w-[480px] p-4 max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl bg-white border-2 border-blue-100 gap-3">
         <DialogHeader className="flex flex-row items-center gap-3 space-y-0 p-0">
           <div className="relative h-14 w-14 rounded-xl overflow-hidden bg-blue-50 flex-shrink-0">
-            <img src={imageUrl(product.imageSmall)} alt={product.name} className="w-full h-full object-cover" />
+            <img ref={productImageRef} data-modal-product-image src={imageUrl(product.imageSmall)} alt={product.name} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
             <DialogTitle className="text-sm font-bold leading-tight text-[#0A1628] line-clamp-2">{product.name}</DialogTitle>
