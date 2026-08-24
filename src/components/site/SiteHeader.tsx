@@ -1,115 +1,101 @@
-import { business, whatsappNumber } from '@/lib/catalog-data'
-import { blurData } from '@/lib/blurhash'
-import { Star, MapPin, Clock, Truck, Store, MessageCircle, Phone } from 'lucide-react'
+'use client'
 
-export function SiteHeader() {
-  const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    `Hola ${business.name}, quisiera información sobre las gafas.`
-  )}`
+import { business } from '@/lib/catalog-data'
+import { ShoppingBag } from 'lucide-react'
+import { useCart } from '@/lib/cart-store'
+import { useEffect, useState } from 'react'
+
+type View = 'catalog' | 'contact'
+
+export function SiteHeader({
+  view,
+  onViewChange,
+  logoUrl,
+}: {
+  view: View
+  onViewChange: (v: View) => void
+  logoUrl?: string
+}) {
+  const [mounted, setMounted] = useState(false)
+  const [count, setCount] = useState(0)
+  const cartMode = useCart((s) => s.cartMode)
+  const cartCount = useCart((s) => s.getCount())
+  const openCart = useCart((s) => s.openCart)
+
+  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    if (mounted) setCount(cartCount)
+  }, [cartCount, mounted])
+
+  const logo = logoUrl || business.logoSmall
 
   return (
-    <header className="sticky top-0 z-40 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-[#E8DCC8]">
-      <div className="mx-auto max-w-6xl px-3 sm:px-6">
-        <div className="flex items-center gap-3 py-2.5 sm:py-3">
+    <>
+      <section className="bg-[#0A1628] fixed w-full max-w-lg top-0 z-30 flex h-14 left-1/2 -translate-x-1/2 shadow-md">
+        <div className="flex px-4 py-2 items-center w-full">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-none flex items-center">
             <img
-              src={business.logoSmall}
+              src={logo}
               alt={business.name}
-              width={44}
-              height={44}
+              width={40}
+              height={40}
               loading="eager"
               fetchPriority="high"
-              className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover ring-2 ring-[#E5533C]/30"
-              style={{
-                backgroundColor: '#EFE6D6',
-                backgroundImage: `url(${blurData(business.blurKeyLogo)})`,
-                backgroundSize: 'cover',
-              }}
+              className="rounded-full w-10 h-10 object-cover ring-1 ring-white/20"
             />
           </div>
 
-          {/* Name + rating */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h1 className="font-bold text-[#2A1A14] text-sm sm:text-base truncate">
-                {business.name}
-              </h1>
-              <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-bold text-[#8A6F5A] bg-[#FFF1E0] px-1.5 py-0.5 rounded-full">
-                <Star className="h-2.5 w-2.5 fill-[#D97706] text-[#D97706]" />
-                {business.rating.toFixed(1)}
-              </span>
-              <span className="hidden md:inline text-[10px] font-semibold text-[#8A6F5A]">
-                ({business.ratingCount} reseña)
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-[#8A6F5A] mt-0.5">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
-              <span className="truncate">{business.county}</span>
-              <span className="text-[#D4C5B0]">·</span>
-              <span className="font-bold text-[#2A1A14]">{business.currency}</span>
-              <span className="text-[#D4C5B0]">·</span>
-              <span>{business.priceRange}</span>
-            </div>
+          {/* Centered title */}
+          <div className="flex-1 text-center">
+            <span className="text-white font-bold text-sm uppercase tracking-wide">
+              {business.name}
+            </span>
           </div>
 
-          {/* WhatsApp CTA */}
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1FB855] active:scale-95 transition-all text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-full shadow-sm"
-          >
-            <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Pedir ahora</span>
-            <span className="sm:hidden">Pedir</span>
-          </a>
+          {/* Navigation */}
+          <nav className="flex-none flex items-center gap-1">
+            <button
+              onClick={() => onViewChange('catalog')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
+                view === 'catalog'
+                  ? 'bg-white text-[#0A1628]'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              Catálogo
+            </button>
+            <button
+              onClick={() => onViewChange('contact')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
+                view === 'contact'
+                  ? 'bg-white text-[#0A1628]'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              Contacto
+            </button>
+          </nav>
         </div>
+      </section>
 
-        {/* Status chips */}
-        <div className="flex items-center gap-2 pb-2 sm:pb-2.5 overflow-x-auto no-scrollbar -mx-1 px-1">
-          <StatusChip icon="delivery" active={business.delivery} label="Domicilio" sublabel="Disponible ahora" />
-          <StatusChip icon="pickup" active={business.pickup} label="Recogida" sublabel="Disponible ahora" />
-          <StatusChip
-            icon="clock"
-            active
-            label="Horario"
-            sublabel="Abierto · cerrado 12–3pm"
-          />
-          <a
-            href={`tel:${business.phone.replace(/[^\d+]/g, '')}`}
-            className="flex-shrink-0 inline-flex items-center gap-1.5 bg-white border border-[#E8DCC8] text-[#2A1A14] text-[10px] sm:text-xs font-semibold px-2.5 py-1.5 rounded-full"
-          >
-            <Phone className="h-3 w-3 text-[#E5533C]" />
-            {business.phone}
-          </a>
-        </div>
-      </div>
-    </header>
-  )
-}
-
-function StatusChip({
-  icon,
-  active,
-  label,
-  sublabel,
-}: {
-  icon: 'delivery' | 'pickup' | 'clock'
-  active: boolean
-  label: string
-  sublabel: string
-}) {
-  const Icon = icon === 'delivery' ? Truck : icon === 'pickup' ? Store : Clock
-  return (
-    <div className="flex-shrink-0 inline-flex items-center gap-1.5 bg-white border border-[#E8DCC8] text-[#2A1A14] text-[10px] sm:text-xs font-semibold px-2.5 py-1.5 rounded-full">
-      <Icon className="h-3 w-3 text-[#E5533C]" />
-      <span className="font-bold">{label}</span>
-      <span className="hidden sm:inline text-[#8A6F5A] font-normal">·</span>
-      <span className="hidden sm:inline text-[#8A6F5A] font-normal">{sublabel}</span>
-      {active && (
-        <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-[#22C55E] ring-2 ring-[#22C55E]/20" />
+      {/* Floating cart button */}
+      {mounted && cartMode && count > 0 && (
+        <button
+          data-cart-button
+          onClick={openCart}
+          className="fixed top-16 right-3 z-40 h-12 w-12 rounded-full bg-[#0A1628] text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+          style={{ left: 'auto' }}
+          aria-label={`Carrito con ${count} items`}
+        >
+          <ShoppingBag className="h-5 w-5" />
+          {count > 0 && (
+            <span className="absolute -top-1 -right-1 bg-[#E5533C] text-white text-[10px] font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1 ring-2 ring-white">
+              {count}
+            </span>
+          )}
+        </button>
       )}
-    </div>
+    </>
   )
 }
