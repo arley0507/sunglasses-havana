@@ -78,7 +78,6 @@ export default function HomeClient({
 }) {
   const [view, setView] = useState<'catalog' | 'contact'>('catalog')
   const [loaded, setLoaded] = useState(false)
-  const [heroLoaded, setHeroLoaded] = useState(false)
   const contactRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -101,19 +100,14 @@ export default function HomeClient({
       <div className="w-full max-w-lg bg-white min-h-screen flex flex-col shadow-sm">
         <SiteHeader view={view} onViewChange={handleViewChange} logoUrl={logoUrl} />
         <main className="pt-14 flex-1 flex flex-col">
-          {/* Hero — show skeleton until image loads */}
+          {/* Hero */}
           <section className="bg-[#0A1628]">
             <div className="relative w-full overflow-hidden">
-              {!heroLoaded && (
-                <div className="w-full bg-gray-200 animate-pulse" style={{ aspectRatio: '1024/751' }} />
-              )}
               <img
                 src={heroImage}
                 alt="Sunglasses Havana"
                 fetchPriority="high"
-                onLoad={() => setHeroLoaded(true)}
                 className="w-full h-auto block"
-                style={{ opacity: heroLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
               />
             </div>
           </section>
