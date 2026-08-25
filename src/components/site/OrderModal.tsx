@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { useCart } from '@/lib/cart-store'
 import { useBackButtonModal } from '@/lib/use-back-button'
 import { imageUrl } from '@/lib/image-url'
-import { flyToCart, flyToTop } from '@/lib/fly-animation'
+import { flyToCart } from '@/lib/fly-animation'
 import { toast } from 'sonner'
 import type { CatalogProduct } from '@/lib/catalog-data'
 import { whatsappNumber } from '@/lib/catalog-data'
@@ -120,12 +120,23 @@ export function OrderModal({ product, config, onClose }: { product: CatalogProdu
               <button onClick={() => submit('sms')} className="w-full bg-white border-2 border-gray-800 text-black hover:bg-gray-50 h-10 rounded-full font-bold flex items-center justify-center gap-2 active:scale-95 text-sm"><MessageSquare className="h-4 w-4" /> Enviar por SMS</button>
               <button onClick={() => {
               const imgEl = productImageRef.current
-              onClose()
+              const cartItem = { productId: product.id, slug: product.slug, name: product.name, description: product.note, note: product.note, price: product.price, imageUrl: product.imageSmall, qty, addons: [] as any[] }
               enableCartMode()
-              if (imgEl) {
-                flyToTop(imgEl)
-              }
+              onClose()
               window.scrollTo({ top: 0, behavior: 'smooth' })
+              // Wait for cart button to appear, then fly product image to it
+              setTimeout(() => {
+                const cartBtn = document.querySelector('[data-cart-button]') as HTMLElement | null
+                if (imgEl && cartBtn) {
+                  flyToCart(imgEl, cartBtn, () => {
+                    addItemToCart(cartItem, qty)
+                    toast.success(product.name + ' agregado al carrito', { duration: 2000 })
+                  })
+                } else {
+                  addItemToCart(cartItem, qty)
+                  toast.success(product.name + ' agregado al carrito', { duration: 2000 })
+                }
+              }, 300)
             }} className="w-full inline-flex items-center justify-center gap-2 bg-gray-100 border-2 border-gray-300 text-black hover:bg-gray-200 h-10 rounded-full font-bold text-xs"><ShoppingBag className="h-3.5 w-3.5" /> Hacer Varios Pedidos</button>
             </>
           )}
