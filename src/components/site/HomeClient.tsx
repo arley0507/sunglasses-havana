@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { business } from '@/lib/catalog-data'
 import { SiteHeader } from './SiteHeader'
 import { CategoryTabs } from './CategoryTabs'
 import { CategorySection } from './CategorySection'
@@ -58,7 +57,6 @@ function SkeletonCards() {
 function FullSkeleton() {
   return (
     <>
-      <HeroSkeleton />
       <TabsSkeleton />
       <div className="px-4 pt-2 pb-2">
         <div className="h-5 bg-gray-200 rounded animate-pulse" style={{ width: '120px' }} />
@@ -103,17 +101,19 @@ export default function HomeClient({
       <div className="w-full max-w-lg bg-white min-h-screen flex flex-col shadow-sm">
         <SiteHeader view={view} onViewChange={handleViewChange} logoUrl={logoUrl} />
         <main className="pt-14 flex-1 flex flex-col">
-          {/* Hero with skeleton */}
+          {/* Hero — show skeleton until image loads */}
           <section className="bg-[#0A1628]">
             <div className="relative w-full overflow-hidden">
-              {!heroLoaded && <HeroSkeleton />}
+              {!heroLoaded && (
+                <div className="w-full bg-gray-200 animate-pulse" style={{ aspectRatio: '1024/751' }} />
+              )}
               <img
                 src={heroImage}
                 alt="Sunglasses Havana"
                 fetchPriority="high"
                 onLoad={() => setHeroLoaded(true)}
                 className="w-full h-auto block"
-                style={{ display: heroLoaded ? 'block' : 'none' }}
+                style={{ opacity: heroLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
               />
             </div>
           </section>
