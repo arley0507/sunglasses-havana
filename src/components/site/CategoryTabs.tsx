@@ -68,7 +68,7 @@ export function CategoryTabs({ categories }: { categories: Category[] }) {
     >
       <div
         ref={navRef}
-        className="flex gap-2 overflow-x-auto no-scrollbar px-3 py-2.5"
+        className="flex gap-4 overflow-x-auto no-scrollbar px-4 py-2.5"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {categories.map(c => (
@@ -77,10 +77,10 @@ export function CategoryTabs({ categories }: { categories: Category[] }) {
             href={`#c-${c.slug}`}
             data-slug={c.slug}
             onClick={e => handleClick(c.slug, e)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex-shrink-0 text-sm font-bold whitespace-nowrap transition-colors ${
               active === c.slug
-                ? 'bg-[#0A1628] text-white shadow-md scale-105'
-                : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-[#0A1628]'
+                ? 'text-[#0A1628] border-b-2 border-[#0A1628] pb-1'
+                : 'text-gray-400 hover:text-[#0A1628]'
             }`}
           >
             {c.name}
