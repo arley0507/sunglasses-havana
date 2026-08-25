@@ -146,20 +146,6 @@ export default function AdminConfig({ config: initialConfig }: { config: SiteCon
         </div>
       </Section>
 
-      {/* Colors */}
-      <Section title="Colores">
-        <div className="space-y-3 mt-2">
-          <div className="flex items-center gap-3">
-            <input type="color" value={form.primaryColor} onChange={e => update('primaryColor', e.target.value)} className="h-10 w-14 rounded cursor-pointer" />
-            <div><label className="text-sm font-bold text-[#0A1628] block">Color principal</label><Input value={form.primaryColor} onChange={e => update('primaryColor', e.target.value)} /></div>
-          </div>
-          <div className="flex items-center gap-3">
-            <input type="color" value={form.footerColor} onChange={e => update('footerColor', e.target.value)} className="h-10 w-14 rounded cursor-pointer" />
-            <div><label className="text-sm font-bold text-[#0A1628] block">Color del pie</label><Input value={form.footerColor} onChange={e => update('footerColor', e.target.value)} /></div>
-          </div>
-        </div>
-      </Section>
-
       {/* Sticky bottom save bar */}
       <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur shadow-lg">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">

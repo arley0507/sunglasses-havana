@@ -12,36 +12,55 @@ export default function AdminApp() {
   const [authed, setAuthed] = useState<boolean | null>(null)
   const [config, setConfig] = useState<SiteConfig | null>(null)
 
-  // Check auth on mount
   useEffect(() => {
-    // First check if we have the cookie set via document.cookie
-    const cookies = document.cookie.split(';').reduce((acc, c) => {
-      const [k, ...v] = c.trim().split('=')
-      acc[k] = v.join('=')
-      return acc
-    }, {} as Record<string, string>)
+    // Check auth on mount by reading document.cookie
+    // This persists across page reloads because we set the cookie via document.cookie
+    const checkAuth = () => {
+      const cookies = document.cookie.split(';').reduce((acc, c) => {
+        const [k, ...v] = c.trim().split('=')
+        acc[k] = v.join('=')
+        return acc
+      }, {} as Record<string, string>)
 
-    if (cookies[COOKIE_NAME] === TOKEN) {
-      setAuthed(true)
-    } else {
-      setAuthed(false)
+      if (cookies[COOKIE_NAME] === TOKEN) {
+        setAuthed(true)
+        // Load config
+        fetch('/api/config', { credentials: 'include' })
+          .then(r => r.json())
+          .then(d => { if (d.config) setConfig(d.config) })
+          .catch(() => {})
+      } else {
+        // Also try server-side check (in case cookie was set by server)
+        fetch('/api/auth/me')
+          .then(r => r.json())
+          .then(d => {
+            if (d.authenticated) {
+              // Server has the cookie, set it client-side too for future reloads
+              document.cookie = `${COOKIE_NAME}=${TOKEN}; path=/; max-age=${60 * 60 * 24 * 365 * 10}; SameSite=Lax`
+              setAuthed(true)
+              fetch('/api/config', { credentials: 'include' })
+                .then(r => r.json())
+                .then(d => { if (d.config) setConfig(d.config) })
+                .catch(() => {})
+            } else {
+              setAuthed(false)
+            }
+          })
+          .catch(() => setAuthed(false))
+      }
     }
+    checkAuth()
   }, [])
 
-  // Load config when authed
-  useEffect(() => {
-    if (authed === true) {
-      fetch('/api/config', { credentials: 'include' })
-        .then(r => r.json())
-        .then(d => { if (d.config) setConfig(d.config) })
-        .catch(() => {})
-    }
-  }, [authed])
-
   const handleLogin = () => {
-    // Set cookie via document.cookie (client-side, persists across reloads)
+    // Set cookie client-side so it persists across reloads
     document.cookie = `${COOKIE_NAME}=${TOKEN}; path=/; max-age=${60 * 60 * 24 * 365 * 10}; SameSite=Lax`
     setAuthed(true)
+    // Load config
+    fetch('/api/config', { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => { if (d.config) setConfig(d.config) })
+      .catch(() => {})
   }
 
   const logout = async () => {
