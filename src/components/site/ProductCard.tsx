@@ -11,7 +11,7 @@ export function ProductCard({ product, config }: { product: CatalogProduct; conf
 
   return (
     <>
-      <div className="mb-4">
+      <div className="mb-3">
         <button onClick={() => setOrderOpen(true)} className="block w-full text-left relative" aria-label={`Pedir ${product.name}`}>
           <div className="rounded-lg bg-gray-100 w-full relative overflow-hidden border border-gray-100" style={{ paddingTop: '100%' }}>
             <img src={product.imageSmall} alt={product.name} loading="lazy" decoding="async"
@@ -21,17 +21,17 @@ export function ProductCard({ product, config }: { product: CatalogProduct; conf
                 <p className="text-white text-xs leading-snug">{product.note}</p>
               </div>
             )}
-            {product.trending && <span className="absolute top-1.5 left-1.5 z-10 inline-flex items-center bg-blue-100 text-blue-800 text-[9px] font-bold uppercase px-2 py-0.5 rounded">Popular</span>}
+            {product.trending && <span className="absolute top-1.5 left-1.5 z-10 inline-flex items-center bg-blue-500 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded">Popular</span>}
           </div>
         </button>
-        <button onClick={() => setOrderOpen(true)} className="block w-full text-left mt-2 overflow-hidden mb-1 min-h-9">
-          <div className="line-clamp-2 text-[#0A1628] font-semibold text-sm leading-tight">{product.name}</div>
+        <button onClick={() => setOrderOpen(true)} className="block w-full text-left mt-1.5 overflow-hidden min-h-[2.5em]">
+          <div className="line-clamp-2 text-[#0A1628] font-semibold text-xs leading-tight">{product.name}</div>
         </button>
         <div className="flex items-center justify-between mt-1">
-          <span className="text-[#0A1628] font-bold text-base">{product.price.toFixed(2)} <span className="text-sm font-semibold">USD</span></span>
-          {product.note && <button onClick={() => setShowDesc(!showDesc)} className="text-blue-500 text-xs font-semibold hover:underline">{showDesc ? 'Ocultar' : 'Info'}</button>}
+          <span className="text-[#0A1628] font-bold text-sm">{product.price.toFixed(2)} <span className="text-xs font-medium text-gray-500">USD</span></span>
+          {product.note && <button onClick={() => setShowDesc(!showDesc)} className="text-blue-500 text-[10px] font-semibold hover:underline">{showDesc ? 'Ocultar' : 'Info'}</button>}
         </div>
-        <button onClick={() => setOrderOpen(true)} className="mt-2 w-full inline-flex items-center justify-center bg-[#0A1628] hover:bg-[#1a3a6a] active:scale-95 transition-all text-white text-xs font-bold py-2 rounded-full">Pedir</button>
+        <button onClick={() => setOrderOpen(true)} className="mt-1.5 w-full inline-flex items-center justify-center bg-[#0A1628] hover:bg-[#1a3a6a] active:scale-95 transition-all text-white text-[11px] font-bold py-1.5 rounded-full">Pedir</button>
       </div>
       {orderOpen && <OrderModal product={product} config={config} onClose={() => setOrderOpen(false)} />}
     </>

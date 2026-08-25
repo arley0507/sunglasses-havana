@@ -137,7 +137,7 @@ export function OrderModal({ product, config, onClose }: { product: CatalogProdu
                   toast.success(product.name + ' agregado al carrito', { duration: 2000 })
                 }
               }, 300)
-            }} className="w-full inline-flex items-center justify-center gap-2 bg-gray-100 border-2 border-gray-300 text-black hover:bg-gray-200 h-10 rounded-full font-bold text-xs"><ShoppingBag className="h-3.5 w-3.5" /> Hacer Varios Pedidos</button>
+            }} className="w-full inline-flex items-center justify-center gap-2 bg-blue-50 border-2 border-blue-500 text-blue-700 hover:bg-blue-100 hover:border-blue-600 h-11 rounded-full font-bold text-sm transition-all active:scale-95 shadow-sm"><ShoppingBag className="h-4 w-4" /> Hacer Varios Pedidos</button>
             </>
           )}
         </div>
